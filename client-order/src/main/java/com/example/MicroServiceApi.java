@@ -1,6 +1,7 @@
 package com.example;
 
 import com.example.domainobject.*;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
@@ -44,11 +45,16 @@ public class MicroServiceApi {
         return responseEntity._embedded.poItems;
     }
 
+    @HystrixCommand(fallbackMethod = "defaultProduct")
     public Product getProduct(long productId) {
         return restTemplate.getForObject(
                 "http://PRODUCTS-APP/products/{productId}",
                 Product.class,
                 productId
         );
+    }
+
+    public Product defaultProduct(long productId) {
+        return new Product();
     }
 }
