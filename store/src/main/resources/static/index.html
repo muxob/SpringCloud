@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Online Store</title>
+    <script src="angular.min.js"></script>
+</head>
+<body>
+
+<script>
+    var app = angular.module('storeApp', []);
+    app.controller('customersCtrl', function($scope, $http) {
+
+        $http.get("/customers-app/customers")
+        .then(function(response) {
+            $scope.customers = response.data._embedded.customers;
+        });
+
+        $scope.onCustomerChanged = function() {
+            $http.get("/orders-app/purchaseOrders/search/findByCustomerId?customerId=" + $scope.customer.id)
+            .then(function(response) {
+                $http.get(response.data._links.items.href)
+                .then(function(response) {
+                    $scope.orderItems = response.data._embedded.poItems;
+                });
+            });
+        };
+
+        $scope.products = {};
+        $scope.getProduct = function(productId) {
+            $http.get("/products-app/products/" + productId)
+            .then(function(response) {
+                $scope.products[productId] = response.data;
+            });
+        };
+    });
+</script>
+
+<div ng-app="storeApp" ng-controller="customersCtrl">
+    <div>
+        <label for="select-customer">Select customer: </label>
+        <select id="select-customer" ng-model="customer" ng-options="c.name for c in customers" ng-change="onCustomerChanged()"></select>
+    </div>
+    <p></p>
+    <div ng-show="customer">
+        Customer Name: {{customer.name}}<br>
+        Customer Address: {{customer.address}}<br>
+        <ul>Line Items:
+            <li ng-repeat="li in orderItems" ng-init="getProduct(li.productId)">
+                Order {{li.orderCount}} {{products[li.productId].name}} from {{products[li.productId].producer}}
+            </li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>
